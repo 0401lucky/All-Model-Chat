@@ -1,14 +1,10 @@
 # Cloudflare Pages配置文件
+name = "all-model-chat"
 compatibility_date = "2023-05-18"
+pages_build_output_dir = "all-model-chat/dist"
 
 [build]
 command = "cd all-model-chat && npm install && npm run build"
-publish = "all-model-chat/dist"
 
 [build.environment]
 NODE_VERSION = "18"
-
-[[redirects]]
-from = "/*"
-to = "/index.html"
-status = 200
