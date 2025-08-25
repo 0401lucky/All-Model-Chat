@@ -157,44 +157,88 @@ export const Header: React.FC<HeaderProps> = ({
                     ))}
                   </div>
                 ) : availableModels.length > 0 ? (
-                  availableModels.map(model => (
-                    <div
-                      key={model.id}
-                      onClick={() => handleModelSelect(model.id)}
-                      onMouseEnter={() => setHoveredModelId(model.id)}
-                      role="option"
-                      aria-selected={model.id === selectedModelId}
-                      className={`cursor-pointer w-full text-left px-4 py-2.5 text-sm sm:text-base hover:bg-[var(--theme-bg-tertiary)] transition-colors
-                        ${model.id === selectedModelId ? 'bg-[var(--theme-bg-tertiary)]' : ''}`
+                  (() => {
+                    // Group models by provider
+                    const modelsByProvider = availableModels.reduce((acc, model) => {
+                      const providerName = model.providerName || 'Unknown Provider';
+                      if (!acc[providerName]) {
+                        acc[providerName] = [];
                       }
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 min-w-0">
-                          {model.isPinned && (
-                            <Pin size={14} className="text-[var(--theme-text-tertiary)] flex-shrink-0" />
-                          )}
-                          <span className={`truncate ${model.id === selectedModelId ? 'text-[var(--theme-text-link)] font-semibold' : 'text-[var(--theme-text-primary)]'}`} title={model.name}>{model.name}</span>
-                        </div>
-                        {model.id === selectedModelId && <Check size={16} className="text-[var(--theme-text-link)] flex-shrink-0" />}
-                      </div>
-                      
-                      {model.id === defaultModelId ? (
-                        <div className="mt-2 pl-1 text-xs text-[var(--theme-text-success)] flex items-center gap-1.5 cursor-default" onClick={(e) => e.stopPropagation()}>
-                            <Check size={14} />
-                            <span>{t('header_setDefault_isDefault')}</span>
-                        </div>
-                      ) : hoveredModelId === model.id ? (
-                          <div className="mt-2 pl-1" style={{ animation: `fadeInUp 0.3s ease-out both` }}>
-                              <button
-                                  onClick={(e) => handleSetDefault(e, model.id)}
-                                  className="text-xs text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] flex items-center gap-1.5"
-                              >
-                                  <span>{t('header_setDefault_action')}</span>
-                              </button>
+                      acc[providerName].push(model);
+                      return acc;
+                    }, {} as Record<string, typeof availableModels>);
+
+                    // Sort providers: Gemini first, then alphabetically
+                    const sortedProviders = Object.keys(modelsByProvider).sort((a, b) => {
+                      if (a === 'Google Gemini') return -1;
+                      if (b === 'Google Gemini') return 1;
+                      return a.localeCompare(b);
+                    });
+
+                    return sortedProviders.map((providerName, providerIndex) => (
+                      <div key={providerName}>
+                        {/* Provider separator/header */}
+                        {Object.keys(modelsByProvider).length > 1 && (
+                          <div className="px-4 py-2 border-b border-[var(--theme-border-secondary)] bg-[var(--theme-bg-primary)] sticky top-0">
+                            <span className="text-xs font-semibold text-[var(--theme-text-secondary)] uppercase tracking-wider">
+                              {providerName}
+                            </span>
                           </div>
-                      ) : null}
-                    </div>
-                  ))
+                        )}
+                        
+                        {modelsByProvider[providerName].map(model => (
+                          <div
+                            key={model.id}
+                            onClick={() => handleModelSelect(model.id)}
+                            onMouseEnter={() => setHoveredModelId(model.id)}
+                            role="option"
+                            aria-selected={model.id === selectedModelId}
+                            className={`cursor-pointer w-full text-left px-4 py-2.5 text-sm sm:text-base hover:bg-[var(--theme-bg-tertiary)] transition-colors
+                              ${model.id === selectedModelId ? 'bg-[var(--theme-bg-tertiary)]' : ''}`
+                            }
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2 min-w-0">
+                                {model.isPinned && (
+                                  <Pin size={14} className="text-[var(--theme-text-tertiary)] flex-shrink-0" />
+                                )}
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <span 
+                                    className={`truncate ${model.id === selectedModelId ? 'text-[var(--theme-text-link)] font-semibold' : 'text-[var(--theme-text-primary)]'}`} 
+                                    title={`${model.name} (${model.providerName})`}
+                                  >
+                                    {model.name}
+                                  </span>
+                                  {Object.keys(modelsByProvider).length <= 1 && (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[var(--theme-bg-accent)] bg-opacity-20 text-[var(--theme-text-accent)] flex-shrink-0">
+                                      {model.providerName}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              {model.id === selectedModelId && <Check size={16} className="text-[var(--theme-text-link)] flex-shrink-0" />}
+                            </div>
+                            
+                            {model.id === defaultModelId ? (
+                              <div className="mt-2 pl-1 text-xs text-[var(--theme-text-success)] flex items-center gap-1.5 cursor-default" onClick={(e) => e.stopPropagation()}>
+                                  <Check size={14} />
+                                  <span>{t('header_setDefault_isDefault')}</span>
+                              </div>
+                            ) : hoveredModelId === model.id ? (
+                                <div className="mt-2 pl-1" style={{ animation: `fadeInUp 0.3s ease-out both` }}>
+                                    <button
+                                        onClick={(e) => handleSetDefault(e, model.id)}
+                                        className="text-xs text-[var(--theme-text-tertiary)] hover:text-[var(--theme-text-primary)] flex items-center gap-1.5"
+                                    >
+                                        <span>{t('header_setDefault_action')}</span>
+                                    </button>
+                                </div>
+                            ) : null}
+                          </div>
+                        ))}
+                      </div>
+                    ));
+                  })()
                 ) : (
                   <div className="px-4 py-2.5 text-sm sm:text-base text-[var(--theme-text-tertiary)]">{t('headerModelSelectorNoModels')}</div>
                 )}

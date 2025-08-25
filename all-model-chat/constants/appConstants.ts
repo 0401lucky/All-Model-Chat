@@ -17,6 +17,7 @@ import {
     DEFAULT_TRANSCRIPTION_THINKING_ENABLED
 } from './modelConstants';
 import { DEFAULT_SYSTEM_INSTRUCTION } from './promptConstants';
+import { DEFAULT_PROVIDERS } from './providerConstants';
 
 // Define constants that are truly app-level
 export const DEFAULT_IS_STREAMING_ENABLED = true; 
@@ -66,4 +67,6 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   isSuggestionsEnabled: true,
   isAutoScrollOnSendEnabled: true,
   isAutoSendOnSuggestionClick: true,
+  providerConfigs: DEFAULT_PROVIDERS,
+  selectedProviderId: 'gemini',
 };

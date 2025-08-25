@@ -2,9 +2,49 @@ import { getClient } from './baseApi';
 import { ModelOption } from '../../types';
 import { logService } from "../logService";
 import { proxyService } from '../proxyService';
+import { unifiedModelService } from '../unifiedModelService';
 
 export const getAvailableModelsApi = async (apiKeysString: string | null): Promise<ModelOption[]> => {
-    logService.info('🔄 [ModelAPI] Fetching available models...');
+    logService.info('🔄 [ModelAPI] Fetching available models via unified service...');
+    
+    try {
+        // Try to get app settings to determine if we should use new provider system
+        const storedSettings = localStorage.getItem('app-settings');
+        const settings = storedSettings ? JSON.parse(storedSettings) : {};
+        
+        // If provider configs exist in settings, use the new unified system
+        if (settings.providerConfigs && Array.isArray(settings.providerConfigs)) {
+            logService.info('🔄 Using new multi-provider system');
+            return await unifiedModelService.getAvailableModels(settings);
+        }
+        
+        // Check if we should try the unified system with default providers
+        if (settings.useMultipleProviders !== false) {
+            try {
+                logService.info('🔄 Attempting unified model fetch with default providers');
+                // Pass current settings to unified service
+                const unifiedSettings = {
+                    ...settings,
+                    apiKey: apiKeysString
+                };
+                return await unifiedModelService.getAvailableModels(unifiedSettings);
+            } catch (error) {
+                logService.warn('Unified model fetch failed, falling back to legacy Gemini-only mode:', error);
+            }
+        }
+        
+        // Fallback to original Gemini-only implementation for backward compatibility
+        logService.info('🔄 Using legacy Gemini-only model fetching');
+        return await getLegacyGeminiModels(apiKeysString, settings);
+        
+    } catch (error) {
+        logService.error("Failed to fetch available models:", error);
+        throw error;
+    }
+};
+
+// Legacy Gemini-only model fetching (original implementation)
+async function getLegacyGeminiModels(apiKeysString: string | null, settings: any): Promise<ModelOption[]> {
     const keys = (apiKeysString || '').split('\n').map(k => k.trim()).filter(Boolean);
 
     if (keys.length === 0) {
@@ -15,16 +55,13 @@ export const getAvailableModelsApi = async (apiKeysString: string | null): Promi
     const randomKey = keys[Math.floor(Math.random() * keys.length)];
     logService.info(`🔑 [ModelAPI] Using API key: ${randomKey.substring(0, 10)}...`);
     
-    // 检查是否启用了自定义 API 配置
-    const storedSettings = localStorage.getItem('app-settings');
-    const settings = storedSettings ? JSON.parse(storedSettings) : {};
     const useCustomApiConfig = settings.useCustomApiConfig;
     const apiProxyUrl = settings.apiProxyUrl;
     
     logService.info('⚙️ [ModelAPI] Settings check:', {
         useCustomApiConfig,
         apiProxyUrl,
-        hasSettings: !!storedSettings,
+        hasSettings: !!settings,
         settingsKeys: Object.keys(settings)
     });
     
@@ -43,6 +80,8 @@ export const getAvailableModelsApi = async (apiKeysString: string | null): Promi
                         availableModels.push({
                             id: model.name,
                             name: model.displayName || model.name.split('/').pop() || model.name,
+                            providerId: 'gemini',
+                            providerName: 'Google Gemini',
                             isPinned: false,
                         });
                     }
@@ -69,8 +108,6 @@ export const getAvailableModelsApi = async (apiKeysString: string | null): Promi
     // 回退到原始的 GoogleGenAI SDK 方法
     try {
         // Get proxy URL from localStorage if available
-        const storedSettings = localStorage.getItem('app-settings');
-        const apiProxyUrl = storedSettings ? JSON.parse(storedSettings).apiProxyUrl : null;
         const ai = getClient(randomKey, apiProxyUrl);
 
         const modelPager = await ai.models.list();
@@ -81,6 +118,8 @@ export const getAvailableModelsApi = async (apiKeysString: string | null): Promi
                 availableModels.push({
                     id: model.name,
                     name: model.displayName || model.name.split('/').pop() || model.name,
+                    providerId: 'gemini',
+                    providerName: 'Google Gemini',
                     isPinned: false,
                 });
             }
@@ -99,4 +138,4 @@ export const getAvailableModelsApi = async (apiKeysString: string | null): Promi
         // Re-throw the error for the caller to handle and provide fallbacks.
         throw error;
     }
-};
+}

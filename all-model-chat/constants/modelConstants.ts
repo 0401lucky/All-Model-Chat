@@ -1,4 +1,7 @@
+import { PROVIDER_IDS } from './providerConstants';
+
 export const DEFAULT_MODEL_ID = 'gemini-2.5-flash'; 
+export const DEFAULT_PROVIDER_ID = PROVIDER_IDS.GEMINI;
 
 export const TAB_CYCLE_MODELS: string[] = [
     'gemini-2.5-pro',
@@ -15,10 +18,10 @@ export const DEFAULT_TTS_VOICE = 'Zephyr';
 export const DEFAULT_TRANSCRIPTION_MODEL_ID = 'gemini-2.5-flash';
 export const DEFAULT_TRANSCRIPTION_THINKING_ENABLED = false;
 
-export const AVAILABLE_TRANSCRIPTION_MODELS: { id: string; name: string }[] = [
-    { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash (Default)' },
-    { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro (Higher Quality)' },
-    { id: 'gemini-2.5-flash-lite', name: 'Gemini 2.5 Flash Lite (Fastest)' },
+export const AVAILABLE_TRANSCRIPTION_MODELS: { id: string; name: string; providerId: string; providerName: string }[] = [
+    { id: 'gemini-2.5-flash', name: 'Gemini 2.5 Flash (Default)', providerId: PROVIDER_IDS.GEMINI, providerName: 'Google Gemini' },
+    { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro (Higher Quality)', providerId: PROVIDER_IDS.GEMINI, providerName: 'Google Gemini' },
+    { id: 'gemini-2.5-flash-lite', name: 'Gemini 2.5 Flash Lite (Fastest)', providerId: PROVIDER_IDS.GEMINI, providerName: 'Google Gemini' },
 ];
 
 export const AVAILABLE_TTS_VOICES: { id: string; name: string }[] = [

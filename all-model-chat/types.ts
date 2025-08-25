@@ -49,7 +49,14 @@ export interface ChatMessage {
 export interface ModelOption {
   id:string; 
   name: string; 
+  providerId: string;
+  providerName: string;
+  displayName?: string;
   isPinned?: boolean; 
+  supportsImages?: boolean;
+  supportsStreaming?: boolean;
+  supportsSystemMessages?: boolean;
+  maxTokens?: number;
 }
 
 // Defines the structure for a part of a content message
@@ -123,6 +130,8 @@ export interface AppSettings extends ChatSettings {
  isSuggestionsEnabled: boolean;
  isAutoScrollOnSendEnabled?: boolean;
  isAutoSendOnSuggestionClick?: boolean;
+ providerConfigs?: ProviderConfig[];
+ selectedProviderId?: string;
 }
 
 
@@ -167,6 +176,54 @@ export interface GeminiService {
   transcribeAudio: (apiKey: string, audioFile: File, modelId: string, isThinkingEnabled: boolean) => Promise<string>;
   generateTitle(apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string>;
   generateSuggestions(apiKey: string, userContent: string, modelContent: string, language: 'en' | 'zh'): Promise<string[]>;
+}
+
+// Provider abstraction interfaces
+export interface ProviderConfig {
+  id: string;
+  name: string;
+  apiKey?: string;
+  baseUrl?: string;
+  enabled: boolean;
+  customHeaders?: Record<string, string>;
+}
+
+export interface AIProvider {
+  id: string;
+  name: string;
+  getAvailableModels: (config: ProviderConfig) => Promise<ModelOption[]>;
+  sendMessageStream: (
+    config: ProviderConfig,
+    modelId: string,
+    historyWithLastPrompt: ChatHistoryItem[],
+    systemInstruction: string,
+    generationConfig: { temperature?: number; topP?: number },
+    abortSignal: AbortSignal,
+    onPart: (part: Part) => void,
+    onError: (error: Error) => void,
+    onComplete: (usageMetadata?: any) => void
+  ) => Promise<void>;
+  sendMessageNonStream: (
+    config: ProviderConfig,
+    modelId: string,
+    historyWithLastPrompt: ChatHistoryItem[],
+    systemInstruction: string,
+    generationConfig: { temperature?: number; topP?: number },
+    abortSignal: AbortSignal,
+    onError: (error: Error) => void,
+    onComplete: (parts: Part[], usageMetadata?: any) => void
+  ) => Promise<void>;
+  supportsImages?: boolean;
+  supportsStreaming?: boolean;
+  supportsSystemMessages?: boolean;
+  supportsFileUpload?: boolean;
+}
+
+export interface ProviderRegistry {
+  providers: Map<string, AIProvider>;
+  registerProvider: (provider: AIProvider) => void;
+  getProvider: (providerId: string) => AIProvider | undefined;
+  getAllProviders: () => AIProvider[];
 }
 
 export interface ThoughtSupportingPart extends Part {

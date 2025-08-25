@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { AppSettings } from '../types';
+import { AppSettings, ProviderConfig } from '../types';
 import { Settings, X, Monitor, Layers, MessageSquare, User, Info, DatabaseZap, KeyRound } from 'lucide-react';
 import { DEFAULT_APP_SETTINGS } from '../constants/appConstants';
+import { DEFAULT_PROVIDERS } from '../constants/providerConstants';
 import { Theme } from '../constants/themeConstants';
 import { translations, getResponsiveValue } from '../utils/appUtils';
 import { ApiConfigSection } from './settings/ApiConfigSection';
+import { ProviderConfigSection } from './settings/ProviderConfigSection';
 import { AppearanceSection } from './settings/AppearanceSection';
 import { ChatBehaviorSection } from './settings/ChatBehaviorSection';
 import { DataManagementSection } from './settings/DataManagementSection';
@@ -55,7 +57,23 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      setSettings(currentSettings);
+      const updatedSettings = { ...currentSettings };
+      
+      // Initialize provider configs if not present
+      if (!updatedSettings.providerConfigs || !Array.isArray(updatedSettings.providerConfigs)) {
+        updatedSettings.providerConfigs = [...DEFAULT_PROVIDERS];
+        
+        // If user has existing Gemini API key, apply it to Gemini provider
+        if (updatedSettings.apiKey) {
+          const geminiProvider = updatedSettings.providerConfigs.find(p => p.id === 'gemini');
+          if (geminiProvider) {
+            geminiProvider.apiKey = updatedSettings.apiKey;
+            geminiProvider.enabled = true;
+          }
+        }
+      }
+      
+      setSettings(updatedSettings);
       setActiveTab('interface');
       const timer = setTimeout(() => closeButtonRef.current?.focus(), 100);
       return () => clearTimeout(timer);
@@ -137,17 +155,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             />
           )}
           {activeTab === 'account' && (
-            <ApiConfigSection
-              useCustomApiConfig={settings.useCustomApiConfig}
-              setUseCustomApiConfig={(val) => updateSetting('useCustomApiConfig', val)}
-              apiKey={settings.apiKey}
-              setApiKey={(val) => updateSetting('apiKey', val)}
-              apiProxyUrl={settings.apiProxyUrl}
-              setApiProxyUrl={(val) => updateSetting('apiProxyUrl', val)}
-              useApiProxy={settings.useApiProxy ?? false}
-              setUseApiProxy={(val) => updateSetting('useApiProxy', val)}
-              t={t}
-            />
+            <div className="space-y-6">
+              <ApiConfigSection
+                useCustomApiConfig={settings.useCustomApiConfig}
+                setUseCustomApiConfig={(val) => updateSetting('useCustomApiConfig', val)}
+                apiKey={settings.apiKey}
+                setApiKey={(val) => updateSetting('apiKey', val)}
+                apiProxyUrl={settings.apiProxyUrl}
+                setApiProxyUrl={(val) => updateSetting('apiProxyUrl', val)}
+                useApiProxy={settings.useApiProxy ?? false}
+                setUseApiProxy={(val) => updateSetting('useApiProxy', val)}
+                t={t}
+              />
+              
+              <ProviderConfigSection
+                providerConfigs={settings.providerConfigs || DEFAULT_PROVIDERS}
+                onProviderConfigsChange={(configs: ProviderConfig[]) => updateSetting('providerConfigs', configs)}
+                t={t}
+              />
+            </div>
           )}
           {activeTab === 'data' && (
              <DataManagementSection
