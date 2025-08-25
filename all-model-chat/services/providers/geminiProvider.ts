@@ -1,8 +1,8 @@
-import { AIProvider, ProviderConfig, ModelOption, ChatHistoryItem } from '../types';
+import { AIProvider, ProviderConfig, ModelOption, ChatHistoryItem } from '../../types';
 import { Part } from "@google/genai";
-import { PROVIDER_IDS } from '../constants/providerConstants';
+import { PROVIDER_IDS } from '../../constants/providerConstants';
 import { geminiServiceInstance } from '../geminiService';
-import { logService } from './logService';
+import { logService } from '../logService';
 
 class GeminiProvider implements AIProvider {
   id = PROVIDER_IDS.GEMINI;

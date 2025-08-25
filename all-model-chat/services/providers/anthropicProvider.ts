@@ -1,7 +1,7 @@
-import { AIProvider, ProviderConfig, ModelOption, ChatHistoryItem } from '../types';
+import { AIProvider, ProviderConfig, ModelOption, ChatHistoryItem } from '../../types';
 import { Part } from "@google/genai";
-import { PROVIDER_IDS } from '../constants/providerConstants';
-import { logService } from './logService';
+import { PROVIDER_IDS } from '../../constants/providerConstants';
+import { logService } from '../logService';
 
 interface AnthropicMessage {
   role: 'user' | 'assistant';
